@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Sky -->
+  <rect width="800" height="600" fill="#f5d76e"/>
+  
+  <!-- Sun -->
+  <circle cx="400" cy="100" r="50" fill="#f39c12"/>
+  
+  <!-- Sand dunes -->
+  <path d="M0,300 Q200,250 400,300 Q600,350 800,300 L800,600 L0,600 Z" fill="#d2b48c"/>
+  <path d="M0,400 Q200,350 400,400 Q600,450 800,400 L800,600 L0,600 Z" fill="#c19a6b"/>
+  <path d="M0,500 Q200,450 400,500 Q600,550 800,500 L800,600 L0,600 Z" fill="#b08c5a"/>
+</svg> 
