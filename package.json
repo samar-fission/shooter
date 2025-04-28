@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "start": "vite",
     "generate-sounds": "node src/assets/sounds/generateSounds.js",
-    "deploy": "npm run build && gh-pages -d dist --force"
+    "deploy": "npm run build && gh-pages -d dist"
   },
   "keywords": [],
   "author": "",

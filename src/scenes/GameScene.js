@@ -58,17 +58,17 @@ class GameScene extends Phaser.Scene {
 
   preload() {
     console.log('GameScene preload');
-    this.load.image('player', '/src/assets/images/player.svg');
-    this.load.image('enemy', '/src/assets/images/enemy.svg');
-    this.load.image('bullet', '/src/assets/images/bullet.svg');
+    this.load.image('player', 'assets/images/player.svg');
+    this.load.image('enemy', 'assets/images/enemy.svg');
+    this.load.image('bullet', 'assets/images/bullet.svg');
     
     // Load backgrounds
-    this.load.image('space-bg', '/src/assets/images/backgrounds/space.svg');
-    this.load.image('desert-bg', '/src/assets/images/backgrounds/desert.svg');
-    this.load.image('snow-bg', '/src/assets/images/backgrounds/snow.svg');
-    this.load.image('ocean-bg', '/src/assets/images/backgrounds/ocean.svg');
-    this.load.image('jungle-bg', '/src/assets/images/backgrounds/jungle.svg');
-    this.load.image('city-bg', '/src/assets/images/backgrounds/city.svg');
+    this.load.image('space-bg', 'assets/images/backgrounds/space.svg');
+    this.load.image('desert-bg', 'assets/images/backgrounds/desert.svg');
+    this.load.image('snow-bg', 'assets/images/backgrounds/snow.svg');
+    this.load.image('ocean-bg', 'assets/images/backgrounds/ocean.svg');
+    this.load.image('jungle-bg', 'assets/images/backgrounds/jungle.svg');
+    this.load.image('city-bg', 'assets/images/backgrounds/city.svg');
   }
 
   create() {

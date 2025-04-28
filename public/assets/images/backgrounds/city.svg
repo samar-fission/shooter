@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Sky -->
+  <rect width="800" height="600" fill="#1a1a2e"/>
+  
+  <!-- Buildings -->
+  <g fill="#2a2a3a">
+    <!-- Left buildings -->
+    <rect x="50" y="200" width="60" height="400"/>
+    <rect x="150" y="150" width="50" height="450"/>
+    <rect x="250" y="250" width="40" height="350"/>
+    
+    <!-- Right buildings -->
+    <rect x="510" y="180" width="70" height="420"/>
+    <rect x="610" y="220" width="60" height="380"/>
+    <rect x="700" y="160" width="50" height="440"/>
+  </g>
+  
+  <!-- Windows -->
+  <g fill="#ffff00" opacity="0.8">
+    <!-- Left building windows -->
+    <rect x="60" y="220" width="10" height="15"/>
+    <rect x="80" y="220" width="10" height="15"/>
+    <rect x="60" y="250" width="10" height="15"/>
+    <rect x="80" y="250" width="10" height="15"/>
+    
+    <!-- Middle building windows -->
+    <rect x="160" y="170" width="10" height="15"/>
+    <rect x="180" y="170" width="10" height="15"/>
+    <rect x="160" y="200" width="10" height="15"/>
+    <rect x="180" y="200" width="10" height="15"/>
+    
+    <!-- Right building windows -->
+    <rect x="520" y="200" width="10" height="15"/>
+    <rect x="540" y="200" width="10" height="15"/>
+    <rect x="560" y="200" width="10" height="15"/>
+    <rect x="520" y="230" width="10" height="15"/>
+    <rect x="540" y="230" width="10" height="15"/>
+    <rect x="560" y="230" width="10" height="15"/>
+  </g>
+  
+  <!-- Stars -->
+  <g fill="#FFFFFF">
+    <circle cx="100" cy="50" r="1"/>
+    <circle cx="200" cy="80" r="1.5"/>
+    <circle cx="300" cy="40" r="1"/>
+    <circle cx="400" cy="70" r="2"/>
+    <circle cx="500" cy="30" r="1"/>
+    <circle cx="600" cy="60" r="1.5"/>
+    <circle cx="700" cy="90" r="1"/>
+  </g>
+  
+  <!-- Ground -->
+  <rect width="800" height="50" y="550" fill="#333333"/>
+</svg> 

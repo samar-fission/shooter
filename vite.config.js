@@ -5,11 +5,11 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3000,
-    open: true
+    open: true,
+    host: true
   },
   build: {
-    outDir: 'dist',
-    assetsDir: 'assets'
+    outDir: 'dist'
   },
-  base: '/shooter-game/'
+  base: process.env.NODE_ENV === 'production' ? '/shooter/' : '/'
 }); 

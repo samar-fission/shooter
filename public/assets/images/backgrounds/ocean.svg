@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Sky -->
+  <rect width="800" height="300" fill="#87CEEB"/>
+  
+  <!-- Ocean -->
+  <rect width="800" height="300" y="300" fill="#1E90FF"/>
+  
+  <!-- Waves -->
+  <path d="M0,300 Q200,280 400,300 Q600,320 800,300" stroke="#4169E1" fill="none" stroke-width="2"/>
+  <path d="M0,350 Q200,330 400,350 Q600,370 800,350" stroke="#4169E1" fill="none" stroke-width="2"/>
+  <path d="M0,400 Q200,380 400,400 Q600,420 800,400" stroke="#4169E1" fill="none" stroke-width="2"/>
+  
+  <!-- Fish -->
+  <g fill="#FF6347">
+    <path d="M100,400 L120,390 L140,400 L120,410 Z"/>
+    <path d="M300,450 L320,440 L340,450 L320,460 Z"/>
+    <path d="M500,380 L520,370 L540,380 L520,390 Z"/>
+    <path d="M700,420 L720,410 L740,420 L720,430 Z"/>
+  </g>
+  
+  <!-- Bubbles -->
+  <g fill="#FFFFFF" opacity="0.6">
+    <circle cx="150" cy="350" r="3"/>
+    <circle cx="350" cy="320" r="2"/>
+    <circle cx="550" cy="380" r="4"/>
+    <circle cx="750" cy="340" r="3"/>
+  </g>
+</svg> 

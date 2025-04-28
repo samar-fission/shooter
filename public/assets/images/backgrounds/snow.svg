@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Sky -->
+  <rect width="800" height="600" fill="#87CEEB"/>
+  
+  <!-- Mountains -->
+  <path d="M0,300 L200,100 L400,300 L600,150 L800,300 L800,600 L0,600 Z" fill="#FFFFFF"/>
+  <path d="M0,400 L200,200 L400,400 L600,250 L800,400 L800,600 L0,600 Z" fill="#F0F0F0"/>
+  
+  <!-- Snowflakes -->
+  <g fill="#FFFFFF">
+    <circle cx="50" cy="50" r="1"/>
+    <circle cx="150" cy="150" r="1.5"/>
+    <circle cx="250" cy="250" r="1"/>
+    <circle cx="350" cy="350" r="2"/>
+    <circle cx="450" cy="450" r="1"/>
+    <circle cx="550" cy="550" r="1.5"/>
+    <circle cx="650" cy="150" r="1"/>
+    <circle cx="750" cy="250" r="2"/>
+    <circle cx="100" cy="300" r="1"/>
+    <circle cx="200" cy="400" r="1.5"/>
+    <circle cx="300" cy="500" r="1"/>
+    <circle cx="400" cy="100" r="2"/>
+    <circle cx="500" cy="200" r="1"/>
+    <circle cx="600" cy="300" r="1.5"/>
+    <circle cx="700" cy="400" r="1"/>
+  </g>
+</svg> 
