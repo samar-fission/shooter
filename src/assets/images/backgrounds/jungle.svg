@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="600" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Sky - darker green -->
+  <rect width="800" height="600" fill="#1a3a1a"/>
+  
+  <!-- Trees - darker shades -->
+  <rect x="100" y="200" width="50" height="400" fill="#0d2c0d"/>
+  <rect x="200" y="150" width="50" height="450" fill="#0d2c0d"/>
+  <rect x="300" y="250" width="50" height="350" fill="#0d2c0d"/>
+  <rect x="400" y="180" width="50" height="420" fill="#0d2c0d"/>
+  <rect x="500" y="220" width="50" height="380" fill="#0d2c0d"/>
+  <rect x="600" y="190" width="50" height="410" fill="#0d2c0d"/>
+  <rect x="700" y="230" width="50" height="370" fill="#0d2c0d"/>
+  
+  <!-- Tree tops - darker green -->
+  <circle cx="125" cy="200" r="60" fill="#0d2c0d"/>
+  <circle cx="225" cy="150" r="60" fill="#0d2c0d"/>
+  <circle cx="325" cy="250" r="60" fill="#0d2c0d"/>
+  <circle cx="425" cy="180" r="60" fill="#0d2c0d"/>
+  <circle cx="525" cy="220" r="60" fill="#0d2c0d"/>
+  <circle cx="625" cy="190" r="60" fill="#0d2c0d"/>
+  <circle cx="725" cy="230" r="60" fill="#0d2c0d"/>
+  
+  <!-- Ground - darker brown -->
+  <rect x="0" y="500" width="800" height="100" fill="#2c1a0d"/>
+  
+  <!-- Vines - darker green -->
+  <path d="M150,300 Q200,250 250,300" stroke="#0d2c0d" stroke-width="10" fill="none"/>
+  <path d="M350,280 Q400,230 450,280" stroke="#0d2c0d" stroke-width="10" fill="none"/>
+  <path d="M550,320 Q600,270 650,320" stroke="#0d2c0d" stroke-width="10" fill="none"/>
+</svg> 
