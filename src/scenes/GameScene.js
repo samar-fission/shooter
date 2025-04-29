@@ -515,12 +515,20 @@ class GameScene extends Phaser.Scene {
     startFromBeginningButtonText.on('pointerout', () => buttonOut(startFromBeginningButtonBg, startFromBeginningButtonText));
     
     const restartLevel = () => {
+      // Set levelTransition to false first
+      this.levelTransition = false;
+      
+      // Destroy all elements
       overlay.destroy();
       failureText.destroy();
       killsText.destroy();
       statsContainer.destroy();
-      buttonContainer.destroy();
-      this.levelTransition = false;
+      restartButtonBg.destroy();
+      restartButtonText.destroy();
+      startFromBeginningButtonBg.destroy();
+      startFromBeginningButtonText.destroy();
+      
+      // Start the wave
       this.startWave();
     };
     
