@@ -80,12 +80,20 @@ class GameScene extends Phaser.Scene {
   create() {
     console.log('GameScene create');
     
+    // Initialize game state from local storage first
+    this.level = parseInt(localStorage.getItem('currentLevel')) || 1;
+    this.totalScore = parseInt(localStorage.getItem('totalScore')) || 0;
+    this.highestScore = parseInt(localStorage.getItem('highestScore')) || 0;
+    this.levelScores = JSON.parse(localStorage.getItem('levelScores')) || {};
+    this.currentLevelScore = 0;
+    
     // Set up background based on level
     this.setBackground();
     
     // Create player with adjusted scale
     const scale = this.getScaleFactor();
-    this.player = this.physics.add.sprite(this.cameras.main.width / 2, this.cameras.main.height - 100, 'player');
+    const playerY = this.isMobile ? this.cameras.main.height - 200 : this.cameras.main.height - 50;
+    this.player = this.physics.add.sprite(this.cameras.main.width / 2, playerY, 'player');
     this.player.setScale(scale);
     this.player.setCollideWorldBounds(false);
     this.player.setBounce(0);
@@ -160,7 +168,7 @@ class GameScene extends Phaser.Scene {
     this.debugText.setScale(initialScale);
 
     // Initialize game state
-    this.gameStarted = false;
+    this.gameStarted = true;
     this.enemiesKilled = 0;
     this.bulletsUsed = 0;
     this.score = 0;
@@ -169,6 +177,178 @@ class GameScene extends Phaser.Scene {
     // If we're loading a saved level, show the level transition popup
     if (this.level > 1) {
       this.showLevelTransition();
+    } else {
+      // Start the wave only if it's a new game
+      this.startWave();
+    }
+
+    // Add mobile touch controls
+    if (this.isMobile) {
+      // Create joystick base (visual indicator)
+      const joystickBase = this.add.circle(
+        80,
+        this.cameras.main.height - 100,
+        60,
+        0x000000,
+        0.3
+      );
+      joystickBase.setScrollFactor(0);
+      joystickBase.setDepth(900);
+      
+      // Create joystick handle
+      const joystickHandle = this.add.circle(
+        80,
+        this.cameras.main.height - 100,
+        30,
+        0xffffff,
+        0.5
+      );
+      joystickHandle.setScrollFactor(0);
+      joystickHandle.setDepth(901);
+      
+      // Create bullet button
+      const bulletButton = this.add.circle(
+        this.cameras.main.width - 100,
+        this.cameras.main.height - 100,
+        50,
+        0x000000,
+        0.3
+      );
+      bulletButton.setScrollFactor(0);
+      bulletButton.setDepth(900);
+      
+      // Add bullet icon/text
+      const bulletText = this.add.text(
+        this.cameras.main.width - 100,
+        this.cameras.main.height - 100,
+        'FIRE',
+        {
+          fontSize: '20px',
+          fill: '#ffffff',
+          fontStyle: 'bold'
+        }
+      ).setOrigin(0.5);
+      bulletText.setScrollFactor(0);
+      bulletText.setDepth(901);
+      
+      // Make controls interactive
+      joystickBase.setInteractive();
+      joystickHandle.setInteractive();
+      bulletButton.setInteractive();
+      bulletText.setInteractive();
+      
+      // Track touch state
+      let isTouchingJoystick = false;
+      let isTouchingFire = false;
+      let joystickTouchId = null;
+      let fireTouchId = null;
+      const maxDistance = 50;  // Movement range
+      const baseSpeed = 300;   // Movement speed
+      const centerX = 80;      // Joystick center X
+      const centerY = this.cameras.main.height - 100;  // Joystick center Y
+      
+      // Handle touch start
+      this.input.on('pointerdown', (pointer) => {
+        // Check if touch is on bullet button
+        const isOnFireButton = pointer.x > this.cameras.main.width / 2;
+        const isOnJoystick = pointer.x < this.cameras.main.width / 2;
+        
+        if (isOnFireButton && !isTouchingFire) {
+          isTouchingFire = true;
+          fireTouchId = pointer.id;
+          if (this.gameStarted && !this.levelTransition) {
+            this.shoot();
+          }
+        }
+        
+        if (isOnJoystick && !isTouchingJoystick) {
+          isTouchingJoystick = true;
+          joystickTouchId = pointer.id;
+          updateJoystickPosition(pointer);
+        }
+      });
+      
+      // Handle touch move
+      this.input.on('pointermove', (pointer) => {
+        if (isTouchingJoystick && pointer.id === joystickTouchId) {
+          updateJoystickPosition(pointer);
+        }
+      });
+      
+      // Handle touch end
+      this.input.on('pointerup', (pointer) => {
+        if (isTouchingJoystick && pointer.id === joystickTouchId) {
+          isTouchingJoystick = false;
+          joystickTouchId = null;
+          
+          // Reset joystick
+          this.tweens.add({
+            targets: joystickHandle,
+            x: centerX,
+            y: centerY,
+            duration: 150,
+            ease: 'Quad.easeOut'
+          });
+          
+          // Stop player
+          this.player.setVelocityX(0);
+        }
+        
+        if (isTouchingFire && pointer.id === fireTouchId) {
+          isTouchingFire = false;
+          fireTouchId = null;
+        }
+      });
+      
+      // Function to update joystick position and player movement
+      const updateJoystickPosition = (pointer) => {
+        if (!isTouchingJoystick) return;
+        
+        // Calculate distance from center
+        const dx = pointer.x - centerX;
+        const dy = pointer.y - centerY;
+        const distance = Math.min(Math.sqrt(dx * dx + dy * dy), maxDistance);
+        
+        // Calculate angle
+        const angle = Math.atan2(dy, dx);
+        
+        // Update joystick handle position
+        joystickHandle.x = centerX + (Math.cos(angle) * distance);
+        joystickHandle.y = centerY + (Math.sin(angle) * distance);
+        
+        // Calculate velocity based on distance from center
+        const normalizedDistance = distance / maxDistance;
+        const velocity = baseSpeed * normalizedDistance;
+        
+        // Update player velocity
+        if (this.gameStarted && !this.levelTransition) {
+          this.player.setVelocityX(Math.cos(angle) * velocity);
+        }
+      };
+      
+      // Add button hover effects
+      bulletButton.on('pointerover', () => {
+        bulletButton.setFillStyle(0x000000, 0.5);
+        bulletText.setStyle({ fill: '#ffff00' });
+      });
+      
+      bulletButton.on('pointerout', () => {
+        bulletButton.setFillStyle(0x000000, 0.3);
+        bulletText.setStyle({ fill: '#ffffff' });
+      });
+
+      // Add touch events for bullet button
+      bulletButton.on('pointerdown', () => {
+        if (this.gameStarted && !this.levelTransition) {
+          this.shoot();
+        }
+      });
+      
+      bulletText.on('pointerdown', () => {
+        if (this.gameStarted && !this.levelTransition) {
+          this.shoot();
+        }
+      });
     }
   }
 
@@ -235,7 +415,8 @@ class GameScene extends Phaser.Scene {
     
     // Create level completion text with proper scaling
     const scale = this.getScaleFactor();
-    this.levelTransitionText = this.add.text(this.cameras.main.width / 2, this.cameras.main.height / 2.9, `Level ${currentLevel} Completed!`, {
+    const popupYOffset = this.isMobile ? 150 : 0; // Move up on mobile
+    this.levelTransitionText = this.add.text(this.cameras.main.width / 2, this.cameras.main.height / 2.9 - popupYOffset, `Level ${currentLevel} Completed!`, {
       fontSize: `${20 * scale}px`,
       fill: '#ffffff',
       fontStyle: 'bold',
@@ -244,10 +425,8 @@ class GameScene extends Phaser.Scene {
     }).setOrigin(0.5);
     this.levelTransitionText.setDepth(1003);
     
- 
-    
     // Show next level details with proper scaling
-    const nextLevelText = this.add.text(this.cameras.main.width / 2, this.cameras.main.height / 2.45, 
+    const nextLevelText = this.add.text(this.cameras.main.width / 2, this.cameras.main.height / 2.45 - popupYOffset, 
       `Next Level ${nextLevel}`,
       {
         fontSize: `${18 * scale}px`,
@@ -260,7 +439,7 @@ class GameScene extends Phaser.Scene {
     nextLevelText.setDepth(1003);
 
     // Create stats container with proper scaling
-    const statsContainer = this.add.container(this.cameras.main.width / 2, this.cameras.main.height / 2.1);
+    const statsContainer = this.add.container(this.cameras.main.width / 2, this.cameras.main.height / 2.1 - popupYOffset);
     statsContainer.setDepth(1003);
 
     const stats = [
@@ -300,7 +479,7 @@ class GameScene extends Phaser.Scene {
     const buttonWidth = 160 * scale;
     const buttonHeight = 35 * scale;
     const buttonX = this.cameras.main.width / 2;
-    const buttonY = this.cameras.main.height/1.3;
+    const buttonY = this.cameras.main.height/1.3 - popupYOffset;
     
     const continueButtonBg = this.add.rectangle(buttonX, buttonY, buttonWidth, buttonHeight, 0x4a4a4a);
     continueButtonBg.setStrokeStyle(1.2 * scale, 0xffffff);
@@ -399,7 +578,8 @@ class GameScene extends Phaser.Scene {
     
     // Create failure text with proper scaling
     const scale = this.getScaleFactor();
-    const failureText = this.add.text(this.cameras.main.width / 2, this.cameras.main.height / 2.9, 'Level Failed!', {
+    const popupYOffset = this.isMobile ? 150 : 0; // Move up on mobile
+    const failureText = this.add.text(this.cameras.main.width / 2, this.cameras.main.height / 2.9 - popupYOffset, 'Level Failed!', {
       fontSize: `${20 * scale}px`,
       fill: '#ffffff',
       fontStyle: 'bold',
@@ -409,7 +589,7 @@ class GameScene extends Phaser.Scene {
     failureText.setDepth(1003);
     
     // Show kills made with proper scaling
-    const killsText = this.add.text(this.cameras.main.width / 2, this.cameras.main.height / 2.45, 
+    const killsText = this.add.text(this.cameras.main.width / 2, this.cameras.main.height / 2.45 - popupYOffset, 
       `Kills Made: ${this.enemiesKilled}/${Math.floor(this.enemiesPerWave * 0.9)}`,
       {
         fontSize: `${18 * scale}px`,
@@ -422,7 +602,7 @@ class GameScene extends Phaser.Scene {
     killsText.setDepth(1003);
 
     // Create stats container with proper scaling
-    const statsContainer = this.add.container(this.cameras.main.width / 2, this.cameras.main.height / 2.1);
+    const statsContainer = this.add.container(this.cameras.main.width / 2, this.cameras.main.height / 2.1 - popupYOffset);
     statsContainer.setDepth(1003);
 
     const stats = [
@@ -462,7 +642,7 @@ class GameScene extends Phaser.Scene {
     const buttonWidth = 160 * scale;
     const buttonHeight = 35 * scale;
     const buttonX = this.cameras.main.width / 2;
-    const buttonY = this.cameras.main.height/1.3;
+    const buttonY = this.cameras.main.height/1.3 - popupYOffset;
     
     const restartButtonBg = this.add.rectangle(buttonX, buttonY, buttonWidth, buttonHeight, 0x4a4a4a);
     restartButtonBg.setStrokeStyle(1.2 * scale, 0xffffff);
@@ -564,7 +744,7 @@ class GameScene extends Phaser.Scene {
     }
 
     // Ensure player stays at the same Y position and within bounds
-    const targetY = this.cameras.main.height - 100;
+    const targetY = this.isMobile ? this.cameras.main.height - 200 : this.cameras.main.height - 50;
     const targetX = Phaser.Math.Clamp(this.player.x, 25, this.cameras.main.width - 25);
     
     this.player.y = targetY;
@@ -601,8 +781,9 @@ class GameScene extends Phaser.Scene {
       `Bullets: ${this.bulletsUsed}/${this.maxBullets}`
     ]);
 
-    // Check if wave is complete (90% requirement)
-    const requiredKills = Math.floor(this.enemiesPerWave * 0.9);
+    // Check if wave is complete (90% requirement for desktop, 80% for mobile)
+    const requiredKillsPercentage = this.isMobile ? 0.8 : 0.9;
+    const requiredKills = Math.floor(this.enemiesPerWave * requiredKillsPercentage);
     
     // Only check for level completion/failure if:
     // 1. All bullets are used AND no bullets are active on screen AND not enough kills
@@ -622,6 +803,7 @@ class GameScene extends Phaser.Scene {
   shoot() {
     if (!this.gameStarted || this.levelTransition || !this.player.active) return;
     if (this.bulletsUsed >= this.maxBullets) return;
+    if (this.time.now < this.lastFired) return; // Add fire rate check
 
     const bullet = this.bullets.get();
     if (bullet) {
@@ -632,6 +814,7 @@ class GameScene extends Phaser.Scene {
       bullet.setTint(this.bulletColors[this.currentBackground]);
       bullet.setVelocityY(-400);
       this.bulletsUsed++; // Increment immediately when firing
+      this.lastFired = this.time.now + this.fireRate; // Update last fired time
     }
   }
 
@@ -647,6 +830,7 @@ class GameScene extends Phaser.Scene {
     this.totalEnemiesCreated = 0;
     this.bulletsUsed = 0;
     this.currentLevelScore = 0;
+    this.lastFired = 0; // Reset last fired time
     
     // Clear any existing bullets and enemies
     this.bullets.clear(true, true);
@@ -660,14 +844,21 @@ class GameScene extends Phaser.Scene {
     
     // Calculate wave properties based on level
     this.enemiesPerWave = baseEnemies + (this.level - 1) * enemiesPerLevel;
-    this.enemySpeed = baseSpeed + (this.level - 1) * speedIncrease;
+    // Apply slower speed for mobile
+    const speedMultiplier = this.isMobile ? 0.7 : 1; // 20% slower on mobile
+    this.enemySpeed = (baseSpeed + (this.level - 1) * speedIncrease) * speedMultiplier;
     
     // Calculate bullet percentage (starts at 130%, increases to 160%)
     const bulletPercentage = Math.min(160, 130 + (this.level - 1) * 1);
-    this.maxBullets = Math.floor(this.enemiesPerWave * (bulletPercentage / 100));
+    // Add 10% more bullets for mobile
+    const mobileBonus = this.isMobile ? 1.1 : 1;
+    this.maxBullets = Math.floor(this.enemiesPerWave * (bulletPercentage / 100) * mobileBonus);
+    
+    // Log bullet count for debugging
+    console.log(`Starting wave with ${this.maxBullets} bullets available (${this.isMobile ? 'mobile bonus applied' : 'desktop'})`);
     
     // Less aggressive wave area narrowing
-    const narrowingFactor = Math.min(0.95, 0.7 + (this.level - 1) * 0.01);
+    const narrowingFactor = 0.95
     const center = 400;
     const width = 400 * narrowingFactor;
     this.waveArea.left = center - width / 2;
@@ -678,9 +869,9 @@ class GameScene extends Phaser.Scene {
       this.time.delayedCall(i * 500, () => {
         let x;
         if (this.isMobile) {
-          // On mobile, spawn between 20% and 80% of screen width
-          const minX = this.cameras.main.width * 0.2;
-          const maxX = this.cameras.main.width * 0.8;
+          // On mobile, spawn between 25% and 75% of screen width
+          const minX = this.cameras.main.width * 0.25;
+          const maxX = this.cameras.main.width * 0.75;
           x = Phaser.Math.Between(minX, maxX);
         } else {
           // On desktop, use the original wave area
@@ -758,7 +949,8 @@ class GameScene extends Phaser.Scene {
     
     if (this.player) {
       const scale = this.getScaleFactor();
-      this.player.setPosition(gameSize.width / 2, gameSize.height - 100);
+      const playerY = this.isMobile ? this.cameras.main.height - 200 : this.cameras.main.height - 50;
+      this.player.setPosition(gameSize.width / 2, playerY);
       this.player.setScale(scale);
       this.player.body.setSize(50 * scale, 60 * scale);
       this.player.body.setOffset(25 * scale, 20 * scale);

@@ -32,6 +32,9 @@ function App() {
             debug: false
           }
         },
+        input: {
+          activePointers: 3  
+        },
         scene: GameScene,
         scale: {
           mode: isMobile ? Phaser.Scale.RESIZE : Phaser.Scale.FIT,
@@ -42,7 +45,7 @@ function App() {
           expandParent: true
         },
         backgroundColor: '#1a1a1a',
-        autoStart: false
+        autoStart: true
       };
 
       console.log('Creating Phaser game instance with config:', gameConfig);
@@ -62,12 +65,6 @@ function App() {
         const scene = gameRef.current.scene.getScene('GameScene');
         if (scene) {
           scene.startWave();
-        }
-      } else {
-        // Pause the game scene if no existing data
-        const scene = gameRef.current.scene.getScene('GameScene');
-        if (scene) {
-          scene.scene.pause();
         }
       }
 
@@ -126,7 +123,14 @@ function App() {
             className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-50"
             style={{ zIndex: 2 }}
           >
-            <h1 className="text-6xl font-bold text-white mb-8 text-shadow-lg shadow-cyan-500/50">
+            <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 md:mb-8 text-shadow-lg shadow-cyan-500/50 text-center px-4"
+              style={{
+                fontSize: isMobile ? '2.5rem' : '3.5rem',
+                padding: '0 1rem',
+                textAlign: 'center',
+                wordWrap: 'break-word'
+              }}
+            >
               Galactic Guardian
             </h1>
             <button
