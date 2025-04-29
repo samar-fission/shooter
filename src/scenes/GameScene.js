@@ -50,6 +50,12 @@ class GameScene extends Phaser.Scene {
     this.highestScore = parseInt(localStorage.getItem('highestScore')) || 0;
     this.levelScores = JSON.parse(localStorage.getItem('levelScores')) || {};
     this.currentLevelScore = 0;
+    this.isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  }
+
+  getScaleFactor() {
+    const baseScale = Math.min(this.cameras.main.width / 800, this.cameras.main.height / 600);
+    return this.isMobile ? 2.2 * baseScale : 1.6 * baseScale;
   }
 
   init() {
@@ -78,44 +84,55 @@ class GameScene extends Phaser.Scene {
     this.setBackground();
     
     // Create player with adjusted scale
-    this.player = this.physics.add.sprite(400, this.cameras.main.height - 100, 'player');
-    this.player.setScale(1.8);
-    this.player.setCollideWorldBounds(true);
+    const scale = this.getScaleFactor();
+    this.player = this.physics.add.sprite(this.cameras.main.width / 2, this.cameras.main.height - 100, 'player');
+    this.player.setScale(scale);
+    this.player.setCollideWorldBounds(false);
     this.player.setBounce(0);
     this.player.setDamping(false);
     this.player.setDrag(0);
     this.player.setMaxVelocity(300);
-    this.player.body.setSize(50, 60);
-    this.player.body.setOffset(25, 20);
+    this.player.body.setSize(50 * scale, 60 * scale);
+    this.player.body.setOffset(25 * scale, 20 * scale);
     this.player.body.setGravityY(0);
     this.player.setDepth(1000);
     this.player.setPipeline('TextureTintPipeline');
+
+    // Set world bounds to match camera
+    this.physics.world.setBounds(0, 0, this.cameras.main.width, this.cameras.main.height);
+
+    // Add resize handler
+    this.scale.on('resize', this.handleResize, this);
 
     // Create bullet group with precise hit boxes and larger pool
     this.bullets = this.physics.add.group({
       classType: Phaser.Physics.Arcade.Image,
       defaultKey: 'bullet',
-      maxSize: 150, // Increased to handle maximum bullets at level 20
+      maxSize: 150,
       createCallback: (bullet) => {
-        bullet.body.setSize(8, 16);
-        bullet.body.setOffset(1, 2);
+        const scale = this.getScaleFactor();
+        bullet.body.setSize(8 * scale, 16 * scale);
+        bullet.body.setOffset(1 * scale, 2 * scale);
         bullet.body.setBounce(0);
         bullet.body.setCollideWorldBounds(false);
         bullet.setDepth(999);
-        bullet.setPipeline('TextureTintPipeline'); // Use a simpler pipeline
+        bullet.setPipeline('TextureTintPipeline');
+        bullet.setScale(0.8 * scale);
       }
     });
 
     // Create enemy group with precise hit boxes
     this.enemies = this.physics.add.group({
       createCallback: (enemy) => {
-        enemy.body.setSize(30, 30);
-        enemy.body.setOffset(5, 10);
+        const scale = this.getScaleFactor();
+        enemy.body.setSize(30 * scale, 30 * scale);
+        enemy.body.setOffset(5 * scale, 10 * scale);
         enemy.body.setImmovable(true);
         enemy.body.setBounce(0);
         enemy.body.setCollideWorldBounds(false);
         enemy.setDepth(998);
-        enemy.setPipeline('TextureTintPipeline'); // Use a simpler pipeline
+        enemy.setPipeline('TextureTintPipeline');
+        enemy.setScale(scale);
       }
     });
     
@@ -129,8 +146,9 @@ class GameScene extends Phaser.Scene {
     this.input.on('pointerdown', this.shoot, this);
 
     // Add debug text with larger font and better visibility
+    const initialScale = this.isMobile ? 0.5625 : this.getScaleFactor() * 0.5;
     this.debugText = this.add.text(16, 16, '', {
-      fontSize: '18px',
+      fontSize: '24px',
       fill: '#ffffff',
       backgroundColor: '#000000',
       padding: { x: 10, y: 5 },
@@ -139,6 +157,7 @@ class GameScene extends Phaser.Scene {
     });
     this.debugText.setScrollFactor(0);
     this.debugText.setDepth(1001);
+    this.debugText.setScale(initialScale);
 
     // Initialize game state
     this.gameStarted = false;
@@ -164,8 +183,8 @@ class GameScene extends Phaser.Scene {
     this.currentBackground = this.backgrounds[randomIndex];
 
     // Create new background
-    this.background = this.add.image(400, this.cameras.main.height / 2, this.currentBackground);
-    this.background.setDisplaySize(800, this.cameras.main.height);
+    this.background = this.add.image(this.cameras.main.width / 2, this.cameras.main.height / 2, this.currentBackground);
+    this.background.setDisplaySize(this.cameras.main.width, this.cameras.main.height);
     this.background.setScrollFactor(0);
 
     // Log the current background and bullet color for debugging
@@ -202,39 +221,46 @@ class GameScene extends Phaser.Scene {
       localStorage.setItem('highestScore', this.highestScore);
     }
     
-    // Create semi-transparent overlay
-    const overlay = this.add.rectangle(400, 300, 800, 600, 0x000000, 0.75);
-    overlay.setDepth(1002);
+    // Create overlay with proper scaling
+    const overlay = this.add.rectangle(
+      this.cameras.main.width / 2, 
+      this.cameras.main.height / 2, 
+      this.cameras.main.width, 
+      this.cameras.main.height, 
+      0x000000, 
+      0.5
+    );
+    overlay.setScrollFactor(0);
+    overlay.setDepth(1000);
     
-    // Create level completion text
-    this.levelTransitionText = this.add.text(400, 150, `Level ${currentLevel} Completed!`, {
-      fontSize: '48px',
+    // Create level completion text with proper scaling
+    const scale = this.getScaleFactor();
+    this.levelTransitionText = this.add.text(this.cameras.main.width / 2, this.cameras.main.height / 2.9, `Level ${currentLevel} Completed!`, {
+      fontSize: `${20 * scale}px`,
       fill: '#ffffff',
       fontStyle: 'bold',
       stroke: '#000000',
-      strokeThickness: 6,
+      strokeThickness: 3 * scale,
     }).setOrigin(0.5);
     this.levelTransitionText.setDepth(1003);
     
-    // Create divider line
-    const divider = this.add.rectangle(400, 200, 400, 2, 0xffffff, 1);
-    divider.setDepth(1003);
+ 
     
-    // Show next level details
-    const nextLevelText = this.add.text(400, 250, 
-      `Level ${nextLevel}`,
+    // Show next level details with proper scaling
+    const nextLevelText = this.add.text(this.cameras.main.width / 2, this.cameras.main.height / 2.45, 
+      `Next Level ${nextLevel}`,
       {
-        fontSize: '32px',
+        fontSize: `${18 * scale}px`,
         fill: '#ffffff',
         fontStyle: 'bold',
         stroke: '#000000',
-        strokeThickness: 4
+        strokeThickness: 1.5 * scale
       }
     ).setOrigin(0.5);
     nextLevelText.setDepth(1003);
 
-    // Create stats container
-    const statsContainer = this.add.container(400, 320);
+    // Create stats container with proper scaling
+    const statsContainer = this.add.container(this.cameras.main.width / 2, this.cameras.main.height / 2.1);
     statsContainer.setDepth(1003);
 
     const stats = [
@@ -246,22 +272,22 @@ class GameScene extends Phaser.Scene {
     ];
 
     stats.forEach((stat, index) => {
-      const y = index * 45;
+      const y = index * 30 * scale;
       
-      // Create stat background
-      const statBg = this.add.rectangle(0, y, 300, 35, 0x4a4a4a, 0.5);
+      // Create stat background with proper scaling
+      const statBg = this.add.rectangle(0, y, 300 * scale, 25 * scale, 0x4a4a4a, 0.5);
       statBg.setOrigin(0.5);
       statBg.setDepth(1003);
       
-      const label = this.add.text(-130, y, stat.label + ':', {
-        fontSize: '24px',
+      const label = this.add.text(-130 * scale, y, stat.label + ':', {
+        fontSize: `${14 * scale}px`,
         fill: '#ffffff',
         fontStyle: 'bold'
       }).setOrigin(0, 0.5);
       label.setDepth(1004);
       
-      const value = this.add.text(130, y, stat.value.toString(), {
-        fontSize: '24px',
+      const value = this.add.text(130 * scale, y, stat.value.toString(), {
+        fontSize: `${14 * scale}px`,
         fill: '#ffffff',
         fontStyle: 'bold'
       }).setOrigin(1, 0.5);
@@ -270,31 +296,31 @@ class GameScene extends Phaser.Scene {
       statsContainer.add([statBg, label, value]);
     });
 
-    // Create continue button
-    const buttonWidth = 200;
-    const buttonHeight = 50;
-    const buttonX = 400;
-    const buttonY = 550;
+    // Create continue button with proper scaling
+    const buttonWidth = 160 * scale;
+    const buttonHeight = 35 * scale;
+    const buttonX = this.cameras.main.width / 2;
+    const buttonY = this.cameras.main.height/1.3;
     
     const continueButtonBg = this.add.rectangle(buttonX, buttonY, buttonWidth, buttonHeight, 0x4a4a4a);
-    continueButtonBg.setStrokeStyle(2, 0xffffff);
+    continueButtonBg.setStrokeStyle(1.2 * scale, 0xffffff);
     continueButtonBg.setDepth(1003);
     
     const continueButtonText = this.add.text(buttonX, buttonY, 'CONTINUE', {
-      fontSize: '24px',
+      fontSize: `${18 * scale}px`,
       fill: '#ffffff',
       fontStyle: 'bold'
     }).setOrigin(0.5);
     continueButtonText.setDepth(1004);
 
-    // Create start from beginning button with larger width
-    const restartButtonWidth = 300;
-    const restartButtonBg = this.add.rectangle(buttonX, buttonY + 70, restartButtonWidth, buttonHeight, 0x4a4a4a);
-    restartButtonBg.setStrokeStyle(2, 0xffffff);
+    // Create start from beginning button with proper scaling
+    const restartButtonWidth = 300 * scale;
+    const restartButtonBg = this.add.rectangle(buttonX, buttonY + 55 * scale, restartButtonWidth, buttonHeight, 0x4a4a4a);
+    restartButtonBg.setStrokeStyle(1.2 * scale, 0xffffff);
     restartButtonBg.setDepth(1003);
     
-    const restartButtonText = this.add.text(buttonX, buttonY + 70, 'START FROM BEGINNING', {
-      fontSize: '20px',
+    const restartButtonText = this.add.text(buttonX, buttonY + 55 * scale, 'START FROM BEGINNING', {
+      fontSize: `${18 * scale}px`,
       fill: '#ffffff',
       fontStyle: 'bold'
     }).setOrigin(0.5);
@@ -327,16 +353,20 @@ class GameScene extends Phaser.Scene {
     restartButtonText.on('pointerout', () => buttonOut(restartButtonBg, restartButtonText));
     
     const startNextLevel = () => {
+      // Set levelTransition to false first
+      this.levelTransition = false;
+      
+      // Destroy all elements
       overlay.destroy();
       this.levelTransitionText.destroy();
-      divider.destroy();
       nextLevelText.destroy();
       statsContainer.destroy();
       continueButtonBg.destroy();
       continueButtonText.destroy();
       restartButtonBg.destroy();
       restartButtonText.destroy();
-      this.levelTransition = false;
+      
+      // Start the next wave
       this.startWave();
     };
     
@@ -362,39 +392,37 @@ class GameScene extends Phaser.Scene {
     this.levelTransition = true;
     this.gameStarted = false;
     
-    // Create semi-transparent overlay
-    const overlay = this.add.rectangle(400, 300, 800, 600, 0x000000, 0.75);
-    overlay.setDepth(1002);
+    // Create semi-transparent overlay with proper scaling
+    const overlay = this.add.rectangle(this.cameras.main.width / 2, this.cameras.main.height / 2, this.cameras.main.width, this.cameras.main.height, 0x000000, 0.5);
+    overlay.setScrollFactor(0);
+    overlay.setDepth(1000);
     
-    // Create failure text
-    const failureText = this.add.text(400, 150, 'Level Failed!', {
-      fontSize: '48px',
+    // Create failure text with proper scaling
+    const scale = this.getScaleFactor();
+    const failureText = this.add.text(this.cameras.main.width / 2, this.cameras.main.height / 2.9, 'Level Failed!', {
+      fontSize: `${20 * scale}px`,
       fill: '#ffffff',
       fontStyle: 'bold',
       stroke: '#000000',
-      strokeThickness: 6,
+      strokeThickness: 3 * scale,
     }).setOrigin(0.5);
     failureText.setDepth(1003);
     
-    // Create divider line
-    const divider = this.add.rectangle(400, 200, 400, 2, 0xffffff, 1);
-    divider.setDepth(1003);
-    
-    // Show kills made
-    const killsText = this.add.text(400, 250, 
+    // Show kills made with proper scaling
+    const killsText = this.add.text(this.cameras.main.width / 2, this.cameras.main.height / 2.45, 
       `Kills Made: ${this.enemiesKilled}/${Math.floor(this.enemiesPerWave * 0.9)}`,
       {
-        fontSize: '32px',
+        fontSize: `${18 * scale}px`,
         fill: '#ffffff',
         fontStyle: 'bold',
         stroke: '#000000',
-        strokeThickness: 4
+        strokeThickness: 1.5 * scale
       }
     ).setOrigin(0.5);
     killsText.setDepth(1003);
 
-    // Create stats container
-    const statsContainer = this.add.container(400, 320);
+    // Create stats container with proper scaling
+    const statsContainer = this.add.container(this.cameras.main.width / 2, this.cameras.main.height / 2.1);
     statsContainer.setDepth(1003);
 
     const stats = [
@@ -406,22 +434,22 @@ class GameScene extends Phaser.Scene {
     ];
 
     stats.forEach((stat, index) => {
-      const y = index * 45;
+      const y = index * 30 * scale;
       
-      // Create stat background
-      const statBg = this.add.rectangle(0, y, 300, 35, 0x4a4a4a, 0.5);
+      // Create stat background with proper scaling
+      const statBg = this.add.rectangle(0, y, 300 * scale, 25 * scale, 0x4a4a4a, 0.5);
       statBg.setOrigin(0.5);
       statBg.setDepth(1003);
       
-      const label = this.add.text(-130, y, stat.label + ':', {
-        fontSize: '24px',
+      const label = this.add.text(-130 * scale, y, stat.label + ':', {
+        fontSize: `${14 * scale}px`,
         fill: '#ffffff',
         fontStyle: 'bold'
       }).setOrigin(0, 0.5);
       label.setDepth(1004);
       
-      const value = this.add.text(130, y, stat.value.toString(), {
-        fontSize: '24px',
+      const value = this.add.text(130 * scale, y, stat.value.toString(), {
+        fontSize: `${14 * scale}px`,
         fill: '#ffffff',
         fontStyle: 'bold'
       }).setOrigin(1, 0.5);
@@ -430,31 +458,31 @@ class GameScene extends Phaser.Scene {
       statsContainer.add([statBg, label, value]);
     });
 
-    // Create restart button
-    const buttonWidth = 200;
-    const buttonHeight = 50;
-    const buttonX = 400;
-    const buttonY = 550;
+    // Create restart button with proper scaling
+    const buttonWidth = 160 * scale;
+    const buttonHeight = 35 * scale;
+    const buttonX = this.cameras.main.width / 2;
+    const buttonY = this.cameras.main.height/1.3;
     
     const restartButtonBg = this.add.rectangle(buttonX, buttonY, buttonWidth, buttonHeight, 0x4a4a4a);
-    restartButtonBg.setStrokeStyle(2, 0xffffff);
+    restartButtonBg.setStrokeStyle(1.2 * scale, 0xffffff);
     restartButtonBg.setDepth(1003);
     
     const restartButtonText = this.add.text(buttonX, buttonY, 'RESTART', {
-      fontSize: '24px',
+      fontSize: `${18 * scale}px`,
       fill: '#ffffff',
       fontStyle: 'bold'
     }).setOrigin(0.5);
     restartButtonText.setDepth(1004);
 
-    // Create start from beginning button with larger width
-    const startFromBeginningButtonWidth = 300;
-    const startFromBeginningButtonBg = this.add.rectangle(buttonX, buttonY + 70, startFromBeginningButtonWidth, buttonHeight, 0x4a4a4a);
-    startFromBeginningButtonBg.setStrokeStyle(2, 0xffffff);
+    // Create start from beginning button with proper scaling
+    const startFromBeginningButtonWidth = 300 * scale;
+    const startFromBeginningButtonBg = this.add.rectangle(buttonX, buttonY + 55 * scale, startFromBeginningButtonWidth, buttonHeight, 0x4a4a4a);
+    startFromBeginningButtonBg.setStrokeStyle(1.2 * scale, 0xffffff);
     startFromBeginningButtonBg.setDepth(1003);
     
-    const startFromBeginningButtonText = this.add.text(buttonX, buttonY + 70, 'START FROM BEGINNING', {
-      fontSize: '20px',
+    const startFromBeginningButtonText = this.add.text(buttonX, buttonY + 55 * scale, 'START FROM BEGINNING', {
+      fontSize: `${18 * scale}px`,
       fill: '#ffffff',
       fontStyle: 'bold'
     }).setOrigin(0.5);
@@ -489,13 +517,9 @@ class GameScene extends Phaser.Scene {
     const restartLevel = () => {
       overlay.destroy();
       failureText.destroy();
-      divider.destroy();
       killsText.destroy();
       statsContainer.destroy();
-      restartButtonBg.destroy();
-      restartButtonText.destroy();
-      startFromBeginningButtonBg.destroy();
-      startFromBeginningButtonText.destroy();
+      buttonContainer.destroy();
       this.levelTransition = false;
       this.startWave();
     };
@@ -532,12 +556,11 @@ class GameScene extends Phaser.Scene {
     }
 
     // Ensure player stays at the same Y position and within bounds
-    // Use lerp for smoother movement
     const targetY = this.cameras.main.height - 100;
-    const targetX = Phaser.Math.Clamp(this.player.x, 50, 750);
+    const targetX = Phaser.Math.Clamp(this.player.x, 25, this.cameras.main.width - 25);
     
-    this.player.y = Phaser.Math.Linear(this.player.y, targetY, 0.1);
-    this.player.x = Phaser.Math.Linear(this.player.x, targetX, 0.1);
+    this.player.y = targetY;
+    this.player.x = targetX;
 
     // Spacebar shooting
     if (this.spacebar.isDown && this.time.now > this.lastFired) {
@@ -605,23 +628,26 @@ class GameScene extends Phaser.Scene {
   }
 
   startWave() {
-    if (this.levelTransition) return;
+    if (this.levelTransition) {
+      console.log('Cannot start wave during level transition');
+      return;
+    }
     
     console.log('Starting wave');
     this.gameStarted = true;
     this.enemiesKilled = 0;
     this.totalEnemiesCreated = 0;
     this.bulletsUsed = 0;
-    this.currentLevelScore = 0; // Reset current level score
+    this.currentLevelScore = 0;
     
     // Clear any existing bullets and enemies
     this.bullets.clear(true, true);
     this.enemies.clear(true, true);
     
     // Calculate level-specific values
-    const baseEnemies = 25; // Changed from 10 to 25
+    const baseEnemies = 25;
     const enemiesPerLevel = 5;
-    const baseSpeed = 100; // Back to 100
+    const baseSpeed = 100;
     const speedIncrease = 20;
     
     // Calculate wave properties based on level
@@ -642,13 +668,24 @@ class GameScene extends Phaser.Scene {
     // Spawn enemies with adjusted scale and random colors
     for (let i = 0; i < this.enemiesPerWave; i++) {
       this.time.delayedCall(i * 500, () => {
-        const x = Phaser.Math.Between(this.waveArea.left, this.waveArea.right);
+        let x;
+        if (this.isMobile) {
+          // On mobile, spawn between 20% and 80% of screen width
+          const minX = this.cameras.main.width * 0.2;
+          const maxX = this.cameras.main.width * 0.8;
+          x = Phaser.Math.Between(minX, maxX);
+        } else {
+          // On desktop, use the original wave area
+          x = Phaser.Math.Between(this.waveArea.left, this.waveArea.right);
+        }
+        
         const enemy = this.enemies.create(x, -50, 'enemy');
         if (enemy) {
-          enemy.setScale(1.4);
+          const scale = this.getScaleFactor();
+          enemy.setScale(scale);
           enemy.setVelocityY(this.enemySpeed);
-          enemy.body.setSize(30, 30);
-          enemy.body.setOffset(5, 10);
+          enemy.body.setSize(30 * scale, 30 * scale);
+          enemy.body.setOffset(5 * scale, 10 * scale);
           enemy.body.setImmovable(true);
           enemy.body.setBounce(0);
           enemy.body.setCollideWorldBounds(false);
@@ -699,10 +736,54 @@ class GameScene extends Phaser.Scene {
   gameCompleted() {
     this.player.setActive(false);
     this.player.setVisible(false);
-    this.add.text(400, 300, 'Game Completed!', {
+    this.add.text(this.cameras.main.width / 2, this.cameras.main.height / 2, 'Game Completed!', {
       fontSize: '64px',
       fill: '#00ff00'
     }).setOrigin(0.5);
+  }
+
+  handleResize(gameSize) {
+    if (this.background) {
+      this.background.setPosition(gameSize.width / 2, gameSize.height / 2);
+      this.background.setDisplaySize(gameSize.width, gameSize.height);
+    }
+    
+    if (this.player) {
+      const scale = this.getScaleFactor();
+      this.player.setPosition(gameSize.width / 2, gameSize.height - 100);
+      this.player.setScale(scale);
+      this.player.body.setSize(50 * scale, 60 * scale);
+      this.player.body.setOffset(25 * scale, 20 * scale);
+    }
+    
+    // Scale all bullets
+    this.bullets.getChildren().forEach(bullet => {
+      const scale = this.getScaleFactor();
+      bullet.setScale(0.8 * scale);
+      bullet.body.setSize(8 * scale, 16 * scale);
+      bullet.body.setOffset(1 * scale, 2 * scale);
+    });
+    
+    // Scale all enemies
+    this.enemies.getChildren().forEach(enemy => {
+      const scale = this.getScaleFactor();
+      enemy.setScale(scale);
+      enemy.body.setSize(30 * scale, 30 * scale);
+      enemy.body.setOffset(5 * scale, 10 * scale);
+    });
+    
+    if (this.debugText) {
+      if (this.isMobile) {
+        // On mobile, use fixed scale
+        this.debugText.setScale(0.5625);
+        this.debugText.setPosition(16, 16);
+      } else {
+        // On desktop, use the original scale factor
+        const scale = this.getScaleFactor();
+        this.debugText.setScale(scale * 0.5);
+        this.debugText.setPosition(16 * scale, 16 * scale);
+      }
+    }
   }
 }
 
